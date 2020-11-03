@@ -94,6 +94,7 @@ ARGUMENTS_SPEC_CONTAINER = dict(
     publish=dict(type='list', elements='str', aliases=[
         'ports', 'published', 'published_ports']),
     publish_all=dict(type='bool'),
+    pull=dict(type='bool', default=False),
     read_only=dict(type='bool'),
     read_only_tmpfs=dict(type='bool'),
     recreate=dict(type='bool', default=False),
@@ -1141,9 +1142,10 @@ def ensure_image_exists(module, image, module_params):
     module_exec = module_params['executable']
     if not image:
         return image_actions
-    rc, out, err = module.run_command([module_exec, 'image', 'exists', image])
-    if rc == 0:
-        return image_actions
+    if not module_params['pull']:
+        rc, out, err = module.run_command([module_exec, 'image', 'exists', image])
+        if rc == 0:
+            return image_actions
     rc, out, err = module.run_command([module_exec, 'image', 'pull', image])
     if rc != 0:
         module.fail_json(msg="Can't pull image %s" % image, stdout=out,
